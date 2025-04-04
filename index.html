@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Быстрая игра</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        text-align: center;
+        background: #000000;
+        color: white;
+        font-family: Arial, sans-serif;
+      }
+      canvas {
+        background: rgb(70, 29, 29);
+        display: block;
+        margin: 20px auto;
+        border: 2px solid rgb(0, 0, 0);
+      }
+      .controls {
+        display: flex;
+        justify-content: center;
+        margin-top: 10px;
+      }
+      button {
+        margin: 5px;
+        padding: 10px;
+        font-size: 18px;
+      }
+      .high-score {
+        margin-top: 10px;
+        font-size: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>МОНСТР КУБ!</h1>
+    <p class="high-score">Лучший результат: <span id="highScore">0</span></p>
+    <canvas id="gameCanvas"></canvas>
+    <div class="controls">
+      <button onclick="move('up')">⬆</button>
+    </div>
+    <div class="controls">
+      <button onclick="move('left')">⬅</button>
+      <button onclick="move('down')">⬇</button>
+      <button onclick="move('right')">➡</button>
+    </div>
+    <div class="controls">
+      <button onclick="restartGame()">🔄 Начать заново</button>
+    </div>
+    <script>
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = 400;
+      canvas.height = 400;
+
+      let player, enemy, score, keys;
+      let highScore = localStorage.getItem("highScore") || 0;
+      document.getElementById("highScore").textContent = highScore;
+
+      function initGame() {
+        player = { x: 180, y: 180, size: 20, speed: 4 };
+        enemy = { x: 100, y: 100, size: 20, speed: 2 };
+        score = 0;
+        keys = {};
+      }
+
+      window.addEventListener("keydown", (e) => (keys[e.key] = true));
+      window.addEventListener("keyup", (e) => (keys[e.key] = false));
+
+      function move(direction) {
+        if (direction === "up") keys["ArrowUp"] = true;
+        if (direction === "down") keys["ArrowDown"] = true;
+        if (direction === "left") keys["ArrowLeft"] = true;
+        if (direction === "right") keys["ArrowRight"] = true;
+        setTimeout(() => {
+          keys = {};
+        }, 100);
+      }
+
+      function restartGame() {
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem("highScore", highScore);
+          document.getElementById("highScore").textContent = highScore;
+        }
+        initGame();
+      }
+
+      function update() {
+        if (keys["ArrowUp"] && player.y > 0) player.y -= player.speed;
+        if (keys["ArrowDown"] && player.y < canvas.height - player.size)
+          player.y += player.speed;
+        if (keys["ArrowLeft"] && player.x > 0) player.x -= player.speed;
+        if (keys["ArrowRight"] && player.x < canvas.width - player.size)
+          player.x += player.speed;
+
+        enemy.x += (player.x - enemy.x) * 0.02;
+        enemy.y += (player.y - enemy.y) * 0.02;
+
+        enemy.x = Math.max(0, Math.min(canvas.width - enemy.size, enemy.x));
+        enemy.y = Math.max(0, Math.min(canvas.height - enemy.size, enemy.y));
+
+        if (Math.hypot(player.x - enemy.x, player.y - enemy.y) < player.size) {
+          alert("Ты проиграл! Очки: " + score);
+          restartGame();
+        }
+        score++;
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "blue";
+        ctx.fillRect(player.x, player.y, player.size, player.size);
+
+        ctx.fillStyle = "red";
+        ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
+
+        ctx.fillStyle = "white";
+        ctx.fillText("Очки: " + score, 10, 20);
+      }
+
+      function gameLoop() {
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+      }
+
+      initGame();
+      gameLoop();
+    </script>
+  </body>
+</html>
